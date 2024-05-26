@@ -37,7 +37,7 @@ export class Engine {
     const board: Board | Error = Board.newByUSI(usi)
     if (board instanceof Board) {
       const pattern: RegExp = /^.{7}$/
-      const moves: string[] = exportCSA(this.board, {})
+      const moves: string[] = exportCSA(board, {})
         .split('\n')
         .filter((v) => pattern.test(v))
       console.log('[CSA CURRENT]', moves)
@@ -90,16 +90,18 @@ export class Engine {
       const stdout: string = data.toString().trim()
       const commands: string[] = stdout.split('\n').filter((v) => v.length !== 0 && v.includes('info'))
       if (stdout.includes('bestmove')) {
-        const pattern: RegExp = /bestmove\s(.{4,6})\s/
+        const pattern: RegExp = /bestmove\s([\w\*]{4,6}|resign)/
         const match: RegExpMatchArray | null = stdout.match(pattern)
         if (match !== null) {
           const [_, bestmove] = [...match]
           const bestmove_csa: string | undefined = this.convertCSAMove(bestmove)
           if (bestmove_csa !== undefined) {
-            console.log('[BEST]:', bestmove_csa, '->', JSON.stringify({ bestmove: bestmove_csa }))
-            ws.send(`BEST_MOVE ${JSON.stringify({ bestmove: bestmove_csa })}`, (e) => {
-              console.log(e)
-            })
+            console.log('[BEST]:', `USI: ${bestmove}`, `CSA: ${bestmove_csa}`)
+            if (bestmove_csa === 'resign') {
+              ws.send(`BEST_MOVE ${JSON.stringify({ bestmove: 'TORYO' })}`)
+            } else {
+              ws.send(`BEST_MOVE ${JSON.stringify({ bestmove: bestmove_csa })}`)
+            }
           } else {
             console.error('[ENGINE]:', 'INVALID CSA MOVE')
           }
@@ -118,12 +120,12 @@ export class Engine {
 
   handleClose() {
     console.info('[SERVER]: CLOSE')
-    // this.engine.stdin.write('stop\n')
+    this.engine.stdin.write('stop\n')
   }
 
   handleOnClose() {
     console.info('[SERVER]: ON CLOSE')
-    // this.engine.stdin.write('stop\n')
+    this.engine.stdin.write('stop\n')
   }
 
   handleMessage(data: WebSocket.Data) {}
