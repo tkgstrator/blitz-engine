@@ -1,0 +1,16 @@
+services:
+  engine:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - node_modules_x86:/home/bun/app/node_modules
+      - ../:/home/bun/app:cached
+    ports:
+      - 9564:8080
+    tty: true
+    stdin_open: true
+
+volumes:
+  node_modules_x86:

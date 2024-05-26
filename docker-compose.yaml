@@ -1,0 +1,8 @@
+services:
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 9564:8080
+    command: ['bun', 'run', 'dev']
